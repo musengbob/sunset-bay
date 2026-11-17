@@ -12,14 +12,27 @@ export function createHud() {
   const speedEl = document.getElementById('speed');
   const carNameEl = document.getElementById('carname');
   const toastEl = document.getElementById('toast');
+  const ammoEl = document.getElementById('ammo');
+  const dialogueEl = document.getElementById('dialogue');
+  const dialogueGiverEl = document.getElementById('dialogueGiver');
+  const dialogueTextEl = document.getElementById('dialogueText');
   const map = document.getElementById('minimap');
   const mctx = map.getContext('2d');
   let toastTimer = 0;
+  let dialogueTimer = 0;
 
   function showToast(text, ms = 2600) {
     toastEl.textContent = text;
     toastEl.style.opacity = '1';
     toastTimer = ms;
+  }
+
+  /** Story dialogue: who is talking, and what they say. */
+  function showDialogue(giver, text, ms = 6000) {
+    dialogueGiverEl.textContent = giver;
+    dialogueTextEl.textContent = text;
+    dialogueEl.style.opacity = '1';
+    dialogueTimer = ms;
   }
 
   function drawMinimap(playerPos, playerHeading, missionPos, policePos, trafficPos) {
@@ -105,12 +118,21 @@ export function createHud() {
     } else {
       speedoEl.style.display = 'none';
     }
+    if (ammoEl) {
+      ammoEl.textContent = state.reloading
+        ? 'RELOADING…'
+        : `PISTOL ${state.ammoMag} / ${state.ammoReserve}`;
+    }
     if (toastTimer > 0) {
       toastTimer -= 16;
       if (toastTimer <= 0) toastEl.style.opacity = '0';
     }
+    if (dialogueTimer > 0) {
+      dialogueTimer -= 16;
+      if (dialogueTimer <= 0) dialogueEl.style.opacity = '0';
+    }
     drawMinimap(state.playerPos, state.playerHeading, state.missionPos, state.policePos, state.trafficPos);
   }
 
-  return { update, showToast };
+  return { update, showToast, showDialogue };
 }

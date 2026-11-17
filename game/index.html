@@ -29,6 +29,9 @@
   #hint { bottom: 12px; left: 12px; font-size: 13px; color: #d7e4ff; }
   #toast { top: 76px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: 700;
     color: #ffd23e; opacity: 0; transition: opacity 0.3s; }
+  #dialogue { top: 118px; left: 50%; transform: translateX(-50%); font-size: 16px; line-height: 1.45;
+    max-width: 560px; opacity: 0; transition: opacity 0.3s; text-align: left; }
+  #dialogue b { color: #ffd23e; }
   .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
     justify-content: center; z-index: 10; text-align: center;
     background: linear-gradient(180deg, rgba(10,16,34,0.25) 0%, rgba(10,16,34,0.72) 78%); }
@@ -60,13 +63,15 @@
     <div id="cash">$250</div>
     <div id="stars"></div>
     <div id="healthbar"><div id="healthfill"></div></div>
+    <div id="ammo" style="font-size:15px;color:#ffe9a0;margin-top:4px;">PISTOL 12 / 60</div>
   </div>
   <div class="panel" id="clock">18:42</div>
   <div class="panel" id="minimapWrap"><canvas id="minimap" width="190" height="190"></canvas></div>
   <div class="panel" id="objective"><b>MISSION</b><br><span id="objectiveText">Meet Rico at the Marina.</span></div>
   <div class="panel" id="speedo"><span id="speed">0</span> <small>mph</small><br><small id="carname"></small></div>
-  <div class="panel" id="hint">WASD move &middot; Mouse look &middot; E enter car &middot; Shift run &middot; Space jump / handbrake &middot; P pause</div>
+  <div class="panel" id="hint">WASD move &middot; Mouse look &middot; Click shoot &middot; R reload &middot; E enter car &middot; Shift run &middot; Space jump / handbrake &middot; P pause</div>
   <div class="panel" id="toast"></div>
+  <div class="panel" id="dialogue"><b id="dialogueGiver">Rico Vega</b><br><span id="dialogueText"></span></div>
 </div>
 
 <div class="screen" id="title">
@@ -77,8 +82,8 @@
   to buy your way out &mdash; before the tide comes in.</p>
   <button id="btnNew">NEW GAME</button>
   <button id="btnContinue" class="secondary hidden">CONTINUE</button>
-  <div class="controls">WASD move &middot; Mouse look (click to lock) &middot; E enter / exit car &middot;
-  Shift run &middot; Space jump &middot; F punch &middot; R next mission &middot; P pause &middot; M mute</div>
+  <div class="controls">WASD move &middot; Mouse look (click to lock) &middot; Click shoot &middot; R reload &middot;
+  E enter / exit car &middot; Shift run &middot; Space jump &middot; F punch &middot; T mission &middot; P pause &middot; M mute</div>
 </div>
 
 <div class="screen hidden" id="paused">

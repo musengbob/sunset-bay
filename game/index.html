@@ -3,17 +3,104 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Block Dodger</title>
+<link rel="icon" href="data:,">
+<title>Sunset Bay</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1a2b4a;
+    font-family: 'Segoe UI', Arial, sans-serif; color: #fff; }
   #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  /* Read aloud, never shown: the status line screen readers announce. */
-  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  #hud { position: fixed; inset: 0; pointer-events: none; display: none; z-index: 5; }
+  #hud.on { display: block; }
+  .panel { position: absolute; background: rgba(8, 14, 28, 0.62); border-radius: 10px;
+    padding: 8px 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+  #topleft { top: 12px; left: 12px; font-size: 20px; font-weight: 700; line-height: 1.35; }
+  #cash { color: #7dff9a; }
+  #stars { color: #ffd23e; letter-spacing: 2px; font-size: 22px; }
+  #healthbar { width: 170px; height: 10px; background: rgba(255,255,255,0.25);
+    border-radius: 5px; overflow: hidden; margin-top: 4px; }
+  #healthfill { height: 100%; width: 100%; background: #37d67a; }
+  #clock { top: 12px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 700; }
+  #minimapWrap { top: 12px; right: 12px; padding: 6px; }
+  #minimap { display: block; width: 190px; height: 190px; border-radius: 6px; }
+  #objective { bottom: 64px; left: 12px; font-size: 16px; max-width: 420px; line-height: 1.4; }
+  #objective b { color: #ffd23e; }
+  #speedo { bottom: 12px; right: 12px; font-size: 26px; font-weight: 800; text-align: right; display: none; }
+  #speedo small { font-size: 13px; font-weight: 400; color: #cfe3ff; }
+  #hint { bottom: 12px; left: 12px; font-size: 13px; color: #d7e4ff; }
+  #toast { top: 76px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: 700;
+    color: #ffd23e; opacity: 0; transition: opacity 0.3s; }
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; z-index: 10; text-align: center;
+    background: linear-gradient(180deg, rgba(10,16,34,0.25) 0%, rgba(10,16,34,0.72) 78%); }
+  .screen h1 { font-size: 84px; margin: 0; letter-spacing: 6px; font-weight: 900;
+    background: linear-gradient(180deg, #fff3b0 20%, #ff9d45 55%, #ff5e62 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 4px 24px rgba(255, 120, 40, 0.35); }
+  .screen h2 { font-size: 22px; font-weight: 400; color: #ffe9c4; margin: 6px 0 26px; letter-spacing: 3px; }
+  .screen p { max-width: 560px; color: #dbe7ff; font-size: 15px; line-height: 1.6; margin: 0 0 22px; }
+  .screen button { pointer-events: auto; cursor: pointer; font-size: 19px; font-weight: 700;
+    padding: 13px 34px; margin: 6px; border: 0; border-radius: 10px; color: #fff;
+    background: linear-gradient(180deg, #ff7a3c, #e8433f); box-shadow: 0 4px 18px rgba(232,67,63,0.5); }
+  .screen button.secondary { background: rgba(255,255,255,0.16); box-shadow: none; }
+  .screen .controls { font-size: 13px; color: #b9c9e8; margin-top: 18px; line-height: 1.8; }
+  .hidden { display: none !important; }
+  #busted, #wasted { background: rgba(8, 10, 26, 0.82); }
+  #busted h1 { background: none; color: #4da3ff; -webkit-text-fill-color: #4da3ff; }
+  #wasted h1 { background: none; color: #ff5252; -webkit-text-fill-color: #ff5252; }
 </style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
 </head>
 <body>
-<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
-<p id="status" role="status" aria-live="polite"></p>
+<canvas id="game" aria-label="Sunset Bay: an open-world crime game set in a sun-soaked coastal city"></canvas>
+
+<div id="hud">
+  <div class="panel" id="topleft">
+    <div id="cash">$250</div>
+    <div id="stars"></div>
+    <div id="healthbar"><div id="healthfill"></div></div>
+  </div>
+  <div class="panel" id="clock">18:42</div>
+  <div class="panel" id="minimapWrap"><canvas id="minimap" width="190" height="190"></canvas></div>
+  <div class="panel" id="objective"><b>MISSION</b><br><span id="objectiveText">Meet Rico at the Marina.</span></div>
+  <div class="panel" id="speedo"><span id="speed">0</span> <small>mph</small><br><small id="carname"></small></div>
+  <div class="panel" id="hint">WASD move &middot; Mouse look &middot; E enter car &middot; Shift run &middot; Space jump / handbrake &middot; P pause</div>
+  <div class="panel" id="toast"></div>
+</div>
+
+<div class="screen" id="title">
+  <h1>SUNSET BAY</h1>
+  <h2>AN OPEN-WORLD CRIME STORY</h2>
+  <p>You are <b>Jax Marlow</b>, fresh out of the Bayview lockup and already in debt to the
+  wrong people. Steal a car, dodge the Sunset Bay PD, and run jobs for Rico Vega
+  to buy your way out &mdash; before the tide comes in.</p>
+  <button id="btnNew">NEW GAME</button>
+  <button id="btnContinue" class="secondary hidden">CONTINUE</button>
+  <div class="controls">WASD move &middot; Mouse look (click to lock) &middot; E enter / exit car &middot;
+  Shift run &middot; Space jump &middot; F punch &middot; R next mission &middot; P pause &middot; M mute</div>
+</div>
+
+<div class="screen hidden" id="paused">
+  <h1 style="font-size:56px">PAUSED</h1>
+  <p>Sunset Bay waits for no one. Well &mdash; except right now.</p>
+  <button id="btnResume">RESUME</button>
+  <button id="btnQuit" class="secondary">QUIT TO TITLE</button>
+</div>
+
+<div class="screen hidden" id="busted">
+  <h1>BUSTED</h1>
+  <p>The Sunset Bay PD finally caught up with you. Bail costs you $150 &mdash; and your pride.</p>
+  <button id="btnBusted">BACK ON THE STREETS</button>
+</div>
+
+<div class="screen hidden" id="wasted">
+  <h1>WASTED</h1>
+  <p>You flatlined on the Sunset Bay asphalt. The hospital bill is $200. Jax lives to hustle another day.</p>
+  <button id="btnWasted">WAKE UP</button>
+</div>
+
+<p id="status" role="status" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)"></p>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>
